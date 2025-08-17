@@ -10,11 +10,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"image"
+	"image/png"
+	"os"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/template/html/v2"
-
-	"github.com/jinzhu/copier"                  // https://github.com/jinzhu/copier
+	"github.com/jinzhu/copier" // https://github.com/jinzhu/copier
+	"github.com/makiuchi-d/gozxing"
+	"github.com/makiuchi-d/gozxing/oned"
 	"github.com/openfoodfacts/openfoodfacts-go" // https://pkg.go.dev/github.com/openfoodfacts/openfoodfacts-go
 )
 
@@ -82,6 +86,10 @@ func RenderForm(c *fiber.Ctx) error {
 // ProcessForm processes the form submission.
 func ProcessForm(c *fiber.Ctx) error {
 	UPC_String := c.FormValue("UPC_String")
+
+	upcFromValue(UPC_String)
+	valueFromUPC()
+
 	fmt.Println("UPC_String:", UPC_String)
 	minimalProduct, err := upcLookupViaOFF(UPC_String)
 	displayValue := ""
@@ -91,6 +99,33 @@ func ProcessForm(c *fiber.Ctx) error {
 		displayValue = err.Error()
 	}
 	return c.Render("display_results", fiber.Map{"DisplayResults": displayValue})
+}
+
+func upcFromValue(upc_string string) {
+	// Generate a barcode image (*BitMatrix)
+	enc := oned.NewUPCAWriter()
+	img, _ := enc.Encode(upc_string, gozxing.BarcodeFormat_UPC_A, 250, 50, nil)
+
+	file, _ := os.Create("barcode.png")
+	defer file.Close()
+
+	// *BitMatrix implements the image.Image interface,
+	// so it is able to be passed to png.Encode directly.
+	_ = png.Encode(file, img)
+}
+
+func valueFromUPC() {
+	file, _ := os.Open("barcode.png")
+	img, _, _ := image.Decode(file)
+
+	// prepare BinaryBitmap
+	bmp, _ := gozxing.NewBinaryBitmapFromImage(img)
+
+	// decode image
+	upcReader := oned.NewUPCAReader()
+	result, _ := upcReader.Decode(bmp, nil)
+
+	fmt.Println(result)
 }
 
 func main() {

@@ -8,7 +8,11 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/template/html/v2"
 
 	"github.com/jinzhu/copier"                  // https://github.com/jinzhu/copier
 	"github.com/openfoodfacts/openfoodfacts-go" // https://pkg.go.dev/github.com/openfoodfacts/openfoodfacts-go
@@ -46,26 +50,65 @@ func productToMinimalProduct(product openfoodfacts.Product) (results MinimalProd
 	return ret
 }
 
+func upcLookupViaOFF(upc_string string) (results MinimalProduct, err error) {
+	api := openfoodfacts.NewClient("world", "", "")
+	product, err := api.Product(upc_string)
+	minimalProduct := MinimalProduct{}
+	if err == nil {
+		// Copy a subset of the full Product data from OFF, for more efficient local DB storage / cache
+		minimalProduct := productToMinimalProduct(*product)
+		fmt.Printf("Minimized Print:\n%+v\n\n", minimalProduct)
+		fmt.Println("Pretty Print:\n" + prettyPrint(minimalProduct))
+		return minimalProduct, nil
+	} else {
+		err_msg := fmt.Sprintln("Error from OFF API, Product Likely does not exist, or there was a manual entry error\n\tError message from OFF:", err)
+		fmt.Println("Error from OFF API, Product Likely does not exist, or there was a manual entry error")
+		fmt.Println("\tError message from OFF:", err)
+		return minimalProduct, errors.New(err_msg)
+	}
+}
+
 // pure GoLang Pretty Print - Source: https://stackoverflow.com/a/51270134
 func prettyPrint(i interface{}) string {
 	s, _ := json.MarshalIndent(i, "", "\t")
 	return string(s)
 }
 
+// RenderForm renders the HTML form.
+func RenderForm(c *fiber.Ctx) error {
+	return c.Render("form", fiber.Map{})
+}
+
+// ProcessForm processes the form submission.
+func ProcessForm(c *fiber.Ctx) error {
+	UPC_String := c.FormValue("UPC_String")
+	fmt.Println("UPC_String:", UPC_String)
+	minimalProduct, err := upcLookupViaOFF(UPC_String)
+	displayValue := ""
+	if err == nil {
+		displayValue = prettyPrint(minimalProduct)
+	} else {
+		displayValue = err.Error()
+	}
+	return c.Render("display_results", fiber.Map{"DisplayResults": displayValue})
+}
+
 func main() {
 	// Hardcoding for testing, change this out with UPC scan or entry
 	//UPC_String := "051000185600" // V8 28 can package
-	UPC_String := "815154025911" // NOS Zero Energy Drink
+	//UPC_String := "815154025911" // NOS Zero Energy Drink
 
-	api := openfoodfacts.NewClient("world", "", "")
-	product, err := api.Product(UPC_String)
-	if err == nil {
-		// Copy a subset of the full Product data from OFF, for more efficient local DB storage / cache
-		minimalProduct := productToMinimalProduct(*product)
-		fmt.Printf("Minimized Print:\n%+v\n\n", minimalProduct)
-		fmt.Println("Pretty Print:\n" + prettyPrint(minimalProduct))
-	} else {
-		fmt.Println("Error from OFF API, Product Likely does not exist, or there was a manual entry error")
-		fmt.Println("\tError message from OFF:", err)
-	}
+	app := fiber.New(fiber.Config{
+		Views: html.New("./views", ".html"),
+	})
+
+	// Serve static files (HTML templates and stylesheets).
+	app.Static("/", "./static")
+
+	// Define routes.
+	app.Get("/", RenderForm)
+	app.Post("/submit", ProcessForm)
+
+	// Start the Fiber app on port 8080.
+	app.Listen(":8080")
 }

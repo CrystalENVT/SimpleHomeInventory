@@ -2,17 +2,18 @@
 
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enter UPC</title>
-    <link rel="stylesheet" href="/styles/main.css">
-</head>
-<body>
-    <form action="/submit" method="post">
-        <label for="name">Enter UPC to Lookup:</label>
-        <input type="text" id="UPC_String" name="UPC_String" required>
-        <button type="submit">Submit</button>
-    </form>
-</body>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Enter UPC</title>
+        <link rel="stylesheet" href="/styles/main.css">
+    </head>
+    <body>
+        <form action="/submit" method="post" enctype="multipart/form-data">
+            <label for="name">Enter UPC to Lookup:</label>
+            <!-- <input type="text" id="UPC_String" name="UPC_String" required> -->
+            <input type="file" id="UPC_Image" name="UPC_Image" accept="image/*;capture=camera" required />
+            <button type="submit">Submit</button>
+        </form>
+    </body>
 </html>

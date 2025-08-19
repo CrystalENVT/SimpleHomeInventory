@@ -9,9 +9,9 @@ Currently this can only be ran from `go run main.go`. Edit / Swap out the `UPC_S
 ## To Do (in rough intended order)
 ~~1. Create Web Page to display results~~
 ~~2. Add text prompt box for UPC number~~
-3. BONUS: See about UPC scanning from Phone camera
+~~3. BONUS: See about UPC scanning from Phone camera~~
 4. Store cached data locally (Json -> MongoDB?) as a "cache" to prevent being spammy of OFF's servers
 5. Add / Remove items from inventory
 6. Add Locations concept (Eg. Pantry, Fridge, Freezer) to keep track of where items would be stored (optional feature)
 7. Add Expiration Date (as optional data)
-8. BONUS: Android app (Especially if the web page doesn't allow scanning)
+8. BONUS: Android app (~~Especially if the web page doesn't allow scanning~~ can take picture & submit image in form, but not "scan")

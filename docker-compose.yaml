@@ -1,0 +1,20 @@
+---
+services:
+  simplehomeinventory-service:
+    container_name: simplehomeinventory-service
+    image: CrystalENVT/simple-home-inventory:${shi_version:-latest}
+    ports:
+      - 7070:7070
+  simplehomeinventory-mongodb:
+    container_name: simplehomeinventory-mongodb
+    image: mongo:8.0.12-noble
+    command: [--auth] # Needed for Mongo to initialize with authentication
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=shi_admin
+      - MONGO_INITDB_ROOT_PASSWORD=shi_admin_p4ssw0rd
+    volumes:
+      - type: bind
+        source: ./mongo_data
+        target: /data/db
+    ports:
+      - 27017:27017

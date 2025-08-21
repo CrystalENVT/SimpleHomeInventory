@@ -25,6 +25,6 @@ func main() {
 	app.Get("/", shiutils.RenderForm)
 	app.Post("/submit", shiutils.ProcessForm)
 
-	// Start the Fiber app on port 8080.
-	app.Listen(":8080")
+	// Start the Fiber app on port 7070.
+	app.Listen(":7070")
 }

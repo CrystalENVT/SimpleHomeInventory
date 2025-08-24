@@ -2,11 +2,17 @@ FROM golang:1.25.0-alpine
 
 WORKDIR /workdir
 
-COPY ./ /workdir/
+# Make docker builds faster for go projects
+COPY go.mod .
+COPY go.sum .
+RUN go mod download -x
+
+# "Normal" Docker build process
+COPY . .
 COPY ./views /apps/views/
 COPY ./static /apps/static/
 
-RUN go build -o /apps/SimpleHomeInventory
+RUN go build -v -cover -o /apps/SimpleHomeInventory
 
 WORKDIR /apps/
 

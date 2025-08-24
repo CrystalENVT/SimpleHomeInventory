@@ -3,18 +3,27 @@ services:
   simplehomeinventory-service:
     container_name: simplehomeinventory-service
     image: CrystalENVT/simple-home-inventory:${shi_version:-latest}
+    # These 2 lines are just for local testing
+    #pull_policy: build
+    #build: .
+    environment:
+      - MONGO_URI=mongodb://${MONGO_ROOT_USER:-shi_admin}:${MONGO_ROOT_PASS:-shi_admin_p4ssw0rd}@${MONGO_HOST:-simplehomeinventory-mongodb}:${MONGO_PORT:-27017}
     ports:
       - 7070:7070
+    restart: unless-stopped
+    depends_on:
+      - simplehomeinventory-mongodb
   simplehomeinventory-mongodb:
     container_name: simplehomeinventory-mongodb
     image: mongo:8.0.12-noble
     command: [--auth] # Needed for Mongo to initialize with authentication
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=shi_admin
-      - MONGO_INITDB_ROOT_PASSWORD=shi_admin_p4ssw0rd
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_ROOT_USER:-shi_admin}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_ROOT_PASS:-shi_admin_p4ssw0rd}
     volumes:
       - type: bind
-        source: ./mongo_data
+        source: ./.mongo_data
         target: /data/db
     ports:
       - 27017:27017
+    restart: unless-stopped
